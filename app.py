@@ -23,7 +23,7 @@ if not st.session_state.authenticated:
     if st.button("Ingresar"):
         if password_input == PASSWORD:
             st.session_state.authenticated = True
-            st.experimental_rerun()  # Recargar la página para ocultar el campo de contraseña
+            st.rerun()  # Recargar la página para ocultar el campo de contraseña
         else:
             st.error("❌ Contraseña incorrecta")
 
