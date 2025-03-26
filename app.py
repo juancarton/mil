@@ -14,8 +14,8 @@ if not st.session_state.autenticado:
     password = st.text_input("Ingrese la contraseña para acceder:", type="password")
     if password == "Ileana":
         st.session_state.autenticado = True
-        st.success("Acceso concedido. ¡Bienvenido!")
-        st.experimental_rerun()  # Recarga la app para aplicar el cambio
+        st.success("Acceso concedido. ¡Bienvenido! Por favor recarga la página si no ves el contenido.")
+        st.stop()
     elif password != "":
         st.error("Contraseña incorrecta. Inténtelo nuevamente.")
     st.stop()  # Se detiene aquí solo si aún no está autenticado
