@@ -67,4 +67,4 @@ if autenticar():
     st.dataframe(articulos_filtrados, use_container_width=True)
 
     st.markdown("---")
-    st.caption("Optimizado para móviles. Publicado en Streamlit Cloud.")
+    st.caption("Optimizado para móviles. Actualizado al 24 de marzo.")
