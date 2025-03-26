@@ -15,10 +15,8 @@ if not st.session_state.autenticado:
     if password == "Ileana":
         st.session_state.autenticado = True
         st.success("Acceso concedido. ¡Bienvenido!")
-        st.experimental_rerun()
     elif password != "":
         st.error("Contraseña incorrecta. Inténtelo nuevamente.")
-    # Reemplazamos st.stop() con return
     st.stop()
 
 # Botón para cerrar sesión
