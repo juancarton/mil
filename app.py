@@ -18,6 +18,7 @@ if not st.session_state.autenticado:
         st.experimental_rerun()
     elif password != "":
         st.error("Contraseña incorrecta. Inténtelo nuevamente.")
+    # Reemplazamos st.stop() con return
     st.stop()
 
 # Botón para cerrar sesión
