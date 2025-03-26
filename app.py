@@ -1,130 +1,79 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
-# Definir la contraseña directamente en el código
-PASSWORD = "Ileana"  # 🔐 Cambia esto por la contraseña que desees
+# Configuración de página
+st.set_page_config(page_title="Comparador de Tiendas", layout="wide")
 
-# Inicializar sesión
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+# Sesiones para autenticación
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
 
-# ----------------------- LOGIN -----------------------
-if not st.session_state.authenticated:
-    st.title("🔐 Acceso a Reporte de Ventas")
-    password_input = st.text_input("Ingresa la contraseña:", type="password")
-
-    if st.button("Ingresar"):
-        if password_input == PASSWORD:
-            st.session_state.authenticated = True
-            st.rerun()  # Recargar la página para ocultar el campo de contraseña
-        else:
-            st.error("❌ Contraseña incorrecta")
-
-# ---------------------- INTERFAZ PRINCIPAL ----------------------
-if st.session_state.authenticated:
-    st.title("📊 Análisis de Ventas - Tiendas")
-
-    # Botón para cerrar sesión
-    if st.button("Cerrar sesión 🔒"):
-        st.session_state.authenticated = False
+if not st.session_state.autenticado:
+    st.title("🔐 Acceso a la App")
+    password = st.text_input("Ingrese la contraseña para acceder:", type="password")
+    if password == "Ileana":
+        st.session_state.autenticado = True
         st.experimental_rerun()
+    elif password != "":
+        st.error("Contraseña incorrecta. Inténtelo nuevamente.")
+    st.stop()
 
-    # Cargar archivo Excel
-    file_path = "ventas_tiendas_actualizado.xlsx"  # Asegúrate de que el archivo esté en la misma carpeta
-    df = pd.read_excel(file_path)
+# Botón para cerrar sesión
+if st.button("🔓 Cerrar sesión"):
+    st.session_state.autenticado = False
+    st.experimental_rerun()
 
-    # Convertir la columna de fecha a formato datetime
-    df["Fecha"] = pd.to_datetime(df["Fecha"])
+# Cargar datos
+ventas_df = pd.read_excel("ventas_tiendas_actualizado.xlsx", sheet_name="Hoja1")
+articulos_df = pd.read_excel("articulos.xlsx", sheet_name="Hoja1")
 
-    # ----------------------- FILTRO POR FECHA -----------------------
-    st.subheader("📅 Comparación de Ventas por Fecha")
-    fecha_seleccionada = st.date_input("Selecciona una fecha", df["Fecha"].min())
+st.title("📊 Comparativa de Ventas y Transacciones entre Tiendas")
 
-    df_fecha = df[df["Fecha"] == pd.to_datetime(fecha_seleccionada)]
+# Tiendas disponibles
+tiendas = ventas_df["CLUB"].unique()
 
-    if not df_fecha.empty:
-        ventas_tienda = df_fecha.groupby("Tienda")["Venta ($)"].sum().reset_index()
-        st.dataframe(ventas_tienda)
+# Filtros de usuario
+col1, col2 = st.columns(2)
+with col1:
+    tienda1 = st.selectbox("Selecciona la primera tienda:", tiendas, index=0)
+with col2:
+    tienda2 = st.selectbox("Selecciona la segunda tienda:", tiendas, index=1)
 
-        # Gráfico
-        fig, ax = plt.subplots()
-        ax.bar(ventas_tienda["Tienda"], ventas_tienda["Venta ($)"], color=["blue", "green"])
-        ax.set_ylabel("Venta Total ($)")
-        ax.set_title(f"Ventas por Tienda - {fecha_seleccionada.strftime('%d-%m-%Y')}")
-        st.pyplot(fig)
-    else:
-        st.warning("⚠ No hay datos de ventas para esta fecha.")
+# Categorías disponibles
+categorias = ventas_df["Categoria"].unique()
+cat_select = st.multiselect("Filtrar por categorías (opcional):", categorias, default=categorias)
 
-    # -------------------- FILTRO POR DÍA DE LA SEMANA --------------------
-    st.subheader("📆 Comparación de Ventas por Día de la Semana")
-    mes_seleccionado = st.selectbox("Selecciona un mes", df["Fecha"].dt.strftime("%B").unique())
-    dia_seleccionado = st.selectbox("Selecciona un día de la semana", df["Día de la Semana"].unique())
+# Filtrar por tienda y categoría
+def filtrar_tienda(df, tienda, categorias):
+    return df[(df["CLUB"] == tienda) & (df["Categoria"].isin(categorias))]
 
-    df_dia = df[(df["Fecha"].dt.strftime("%B") == mes_seleccionado) & (df["Día de la Semana"] == dia_seleccionado)]
-    
-    if not df_dia.empty:
-        ventas_dia = df_dia.groupby("Tienda")["Venta ($)"].sum().reset_index()
-        st.dataframe(ventas_dia)
+t1_df = filtrar_tienda(ventas_df, tienda1, cat_select)
+t2_df = filtrar_tienda(ventas_df, tienda2, cat_select)
 
-        # Gráfico
-        fig, ax = plt.subplots()
-        ax.bar(ventas_dia["Tienda"], ventas_dia["Venta ($)"], color=["orange", "purple"])
-        ax.set_ylabel("Venta Total ($)")
-        ax.set_title(f"Ventas por Tienda - {dia_seleccionado} de {mes_seleccionado}")
-        st.pyplot(fig)
-    else:
-        st.warning("⚠ No hay datos para este día en el mes seleccionado.")
+# Agrupar y sumar datos relevantes
+def resumir(df):
+    return df[["Venta MTD", "Venta YTD", "Trans YTD"]].sum()
 
-    # -------------------- FILTRO POR CATEGORÍA --------------------
-    st.subheader("🏷️ Ventas por Categoría")
-    categoria_seleccionada = st.selectbox("Selecciona una categoría", df["Categoría"].unique())
+resumen1 = resumir(t1_df)
+resumen2 = resumir(t2_df)
 
-    df_categoria = df[df["Categoría"] == categoria_seleccionada]
+# Mostrar tablas resumen
+st.subheader("Resumen Comparativo")
+comparativa = pd.DataFrame({
+    tienda1: resumen1,
+    tienda2: resumen2,
+    "Diferencia": resumen1 - resumen2
+})
+st.dataframe(comparativa.style.format("{:.2f}"), use_container_width=True)
 
-    if not df_categoria.empty:
-        ventas_categoria = df_categoria.groupby(["Tienda", "Fecha"])["Venta ($)"].sum().reset_index()
-        st.dataframe(ventas_categoria)
+# Gráfica comparativa
+st.subheader("Gráfica Comparativa")
+fig = go.Figure(data=[
+    go.Bar(name=tienda1, x=comparativa.index, y=comparativa[tienda1]),
+    go.Bar(name=tienda2, x=comparativa.index, y=comparativa[tienda2])
+])
+fig.update_layout(barmode='group', title="Comparación entre Tiendas", xaxis_title="Métricas", yaxis_title="Valores")
+st.plotly_chart(fig, use_container_width=True)
 
-        # Gráfico
-        fig, ax = plt.subplots()
-        for tienda in ventas_categoria["Tienda"].unique():
-            data_tienda = ventas_categoria[ventas_categoria["Tienda"] == tienda]
-            ax.plot(data_tienda["Fecha"], data_tienda["Venta ($)"], label=tienda)
-        
-        ax.set_ylabel("Venta Total ($)")
-        ax.set_title(f"Ventas en Categoría: {categoria_seleccionada}")
-        ax.legend()
-        st.pyplot(fig)
-    else:
-        st.warning("⚠ No hay datos para esta categoría.")
-
-    # -------------------- FILTRO POR PRODUCTO --------------------
-    st.subheader("🔍 Ventas por Producto")
-    producto_seleccionado = st.selectbox("Selecciona un producto", df["Producto"].unique())
-
-    df_producto = df[df["Producto"] == producto_seleccionado]
-
-    if not df_producto.empty:
-        ventas_producto = df_producto.groupby(["Tienda", "Fecha"])["Venta ($)"].sum().reset_index()
-        st.dataframe(ventas_producto)
-
-        # Gráfico
-        fig, ax = plt.subplots()
-        for tienda in ventas_producto["Tienda"].unique():
-            data_tienda = ventas_producto[ventas_producto["Tienda"] == tienda]
-            ax.plot(data_tienda["Fecha"], data_tienda["Venta ($)"], label=tienda)
-        
-        ax.set_ylabel("Venta Total ($)")
-        ax.set_title(f"Ventas del Producto: {producto_seleccionado}")
-        ax.legend()
-        st.pyplot(fig)
-    else:
-        st.warning("⚠ No hay datos para este producto.")
-
+st.caption("App desarrollada con Streamlit y Plotly. Optimizada para dispositivos móviles.")
