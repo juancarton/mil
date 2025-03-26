@@ -15,6 +15,7 @@ if not st.session_state.autenticado:
     if password == "Ileana":
         st.session_state.autenticado = True
         st.success("Acceso concedido. ¡Bienvenido!")
+        st.experimental_rerun()
     elif password != "":
         st.error("Contraseña incorrecta. Inténtelo nuevamente.")
     st.stop()
@@ -91,8 +92,8 @@ with col_der:
         st.dataframe(merged_art[["NUM ARTICULO", f"DESCRIPCION ({tienda1})", f"PVENTA ({tienda1})", f"PVENTA ({tienda2})"]], use_container_width=True)
 
         fig_art = go.Figure()
-        fig_art.add_trace(go.Bar(x=merged_art["DESCRIPCION ({tienda1})"], y=merged_art[f"PVENTA ({tienda1})"], name=tienda1))
-        fig_art.add_trace(go.Bar(x=merged_art["DESCRIPCION ({tienda1})"], y=merged_art[f"PVENTA ({tienda2})"], name=tienda2))
+        fig_art.add_trace(go.Bar(x=merged_art[f"DESCRIPCION ({tienda1})"], y=merged_art[f"PVENTA ({tienda1})"], name=tienda1))
+        fig_art.add_trace(go.Bar(x=merged_art[f"DESCRIPCION ({tienda1})"], y=merged_art[f"PVENTA ({tienda2})"], name=tienda2))
         fig_art.update_layout(title="Comparativa de Precios de Artículos", xaxis_title="Artículo", yaxis_title="Precio de Venta", barmode="group")
         st.plotly_chart(fig_art, use_container_width=True)
     else:
