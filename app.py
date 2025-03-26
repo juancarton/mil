@@ -14,7 +14,7 @@ if not st.session_state.autenticado:
     password = st.text_input("Ingrese la contraseña para acceder:", type="password")
     if password == "Ileana":
         st.session_state.autenticado = True
-        st.experimental_rerun()
+        st.success("Acceso concedido. ¡Bienvenido!")
     elif password != "":
         st.error("Contraseña incorrecta. Inténtelo nuevamente.")
     st.stop()
@@ -22,7 +22,8 @@ if not st.session_state.autenticado:
 # Botón para cerrar sesión
 if st.button("🔓 Cerrar sesión"):
     st.session_state.autenticado = False
-    st.experimental_rerun()
+    st.success("Sesión cerrada. Recarga la página para volver a ingresar.")
+    st.stop()
 
 # Cargar datos
 ventas_df = pd.read_excel("ventas_tiendas_actualizado.xlsx", sheet_name="Hoja1")
